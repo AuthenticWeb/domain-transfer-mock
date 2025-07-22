@@ -12,14 +12,12 @@
       rel="stylesheet"
     />
     <!-- Chosen Palette: Warm Neutral with Slate Blue accents -->
-    <!-- Application Structure Plan: A single-page, vertically scrolling application with a sticky top navigation to jump between the 5 distinct phases of the plan. This structure mirrors the chronological flow of the implementation plan, making it intuitive for users (e.g., product managers, engineers) to follow the process from start to finish. Key interactions include clickable diagrams to reveal details, tabbed content to compare notification types, and interactive checklists to demonstrate user actions. This design was chosen to transform a static process document into an engaging, explorable experience that aids comprehension and stakeholder alignment. -->
+    <!-- Application Structure Plan: A single-page, vertically scrolling app with sticky navigation. The core structure is now a branching workflow. Phase 1 presents a critical choice: "Transfer with NS Change" or "Keep Existing NS". This choice dynamically alters the content of Phase 2, revealing the correct, detailed timeline for the selected path. This non-linear, choice-driven architecture was chosen because it accurately models the real-world process, allowing stakeholders to understand the distinct steps and complexities of each transfer type. -->
     <!-- Visualization & Content Choices: 
-        - Guiding Principles: Info -> Inform -> Icon-based cards -> Simple visual reinforcement -> HTML/Tailwind.
-        - Phase 1 (Pre-Transfer): Process -> Organize/Inform -> Interactive flowchart diagram -> User clicks nodes to see details, clarifying complex checks -> HTML/Tailwind/JS.
-        - Phase 2 (Workflow): Process -> Change -> Numbered vertical timeline -> User clicks steps to get more info, showing progress -> HTML/Tailwind/JS.
-        - Phase 3 (Communication): Comparison -> Compare -> Tabbed interface with email mockups -> Users click tabs to compare different email types side-by-side -> HTML/Tailwind/JS.
-        - Phase 4 (Escalation): Process -> Organize -> Flowchart for smart ticketing -> Visually explains the decision logic for support escalation -> HTML/Tailwind/JS.
-        - Phase 5 (Onboarding): Task List -> Inform -> Interactive checklist -> User can click checkboxes, making the final steps tangible -> HTML/Tailwind/JS.
+        - Phase 1 (Decision Point): Process -> Organize/Inform -> Interactive choice cards -> User clicks a card to select a transfer path, which sets the state for the rest of the app -> HTML/Tailwind/JS.
+        - Phase 2 (Workflows): Process -> Change -> Two distinct, dynamic vertical timelines -> The correct timeline is displayed based on the Phase 1 choice. The "NS Change" path includes new steps for Zone Population, NS Propagation Monitoring, and then the Registrar Transfer, each with unique icons and descriptions -> HTML/Tailwind/JS.
+        - Phase 3 (Communication): Comparison -> Compare -> Tabbed interface with new mockups -> Now includes notifications specific to the NS change process (e.g., "Populate Zone File," "NS Propagation Complete") -> HTML/Tailwind/JS.
+        - Other phases remain logically consistent but are viewed within the context of the chosen transfer path.
         - All choices avoid SVG/Mermaid, using core web technologies for interactivity and visual structure as required. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -41,31 +39,32 @@
         color: #1e40af;
         border-bottom-color: #1e40af;
       }
-      .diagram-node {
+      .choice-card {
         transition: all 0.3s ease;
         cursor: pointer;
       }
-      .diagram-node.active {
-        transform: scale(1.05);
-        box-shadow: 0 0 15px rgba(30, 64, 175, 0.3);
+      .choice-card.active {
+        transform: scale(1.03);
+        box-shadow: 0 0 20px rgba(30, 64, 175, 0.3);
         border-color: #1e40af;
       }
-      .details-pane {
+      .details-pane,
+      .workflow-pane {
         transition:
           opacity 0.5s ease,
           transform 0.5s ease;
       }
-      .hidden-detail {
+      .hidden-pane {
         opacity: 0;
         transform: translateY(10px);
+        position: absolute;
         pointer-events: none;
-        height: 0;
-        overflow: hidden;
+        width: 100%;
       }
-      .visible-detail {
+      .visible-pane {
         opacity: 1;
         transform: translateY(0);
-        height: auto;
+        position: relative;
       }
       .tab.active {
         background-color: #1e40af;
@@ -123,157 +122,47 @@
         </p>
       </section>
 
-      <!-- Guiding Principles -->
-      <section class="mb-24">
-        <h3 class="text-3xl font-bold text-center text-gray-800 mb-12">
-          Our Guiding Principles
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div class="bg-white p-6 rounded-xl shadow-md text-center">
-            <div class="text-4xl mb-3">💬</div>
-            <h4 class="font-bold text-lg mb-2">Proactive Communication</h4>
-            <p class="text-sm text-gray-600">
-              Never leave the customer guessing. Clearly communicate status,
-              next steps, and potential delays.
-            </p>
-          </div>
-          <div class="bg-white p-6 rounded-xl shadow-md text-center">
-            <div class="text-4xl mb-3">✨</div>
-            <h4 class="font-bold text-lg mb-2">Frictionless Experience</h4>
-            <p class="text-sm text-gray-600">
-              Automate every possible step to make the entire process feel
-              seamless and effortless for the client.
-            </p>
-          </div>
-          <div class="bg-white p-6 rounded-xl shadow-md text-center">
-            <div class="text-4xl mb-3">🧠</div>
-            <h4 class="font-bold text-lg mb-2">Intelligent Error Handling</h4>
-            <p class="text-sm text-gray-600">
-              When issues arise, provide clear explanations and simple,
-              actionable paths to resolution.
-            </p>
-          </div>
-          <div class="bg-white p-6 rounded-xl shadow-md text-center">
-            <div class="text-4xl mb-3">🏢</div>
-            <h4 class="font-bold text-lg mb-2">B2B Focus</h4>
-            <p class="text-sm text-gray-600">
-              Build for business needs with bulk transfer capabilities and
-              clear, auditable tracking.
-            </p>
-          </div>
-        </div>
-      </section>
-
       <hr class="my-24 border-gray-200" />
 
       <!-- Phase 1 -->
       <section id="phase1" class="phase-section mb-24">
         <h3 class="text-3xl font-bold text-gray-800 mb-4">
           <span class="text-blue-800">Phase 1:</span>
-          Foundation & Pre-Transfer Preparation
+          Choose Your Transfer Path
         </h3>
         <p class="text-lg text-gray-600 mb-12">
-          This initial phase is about empowering the customer and proactively
-          identifying potential issues *before* a transfer begins. The
-          centerpiece is an automated checker that validates a domain's
-          eligibility. Click on a check below to see the details.
+          The first step is to identify the type of transfer. This choice
+          determines the entire workflow to ensure a smooth transition with no
+          downtime. Select a path to see the corresponding process in Phase 2.
         </p>
 
-        <div class="lg:flex lg:gap-8">
-          <!-- Interactive Diagram -->
-          <div class="lg:w-1/2 flex flex-col items-center">
-            <div class="bg-gray-100 p-4 rounded-lg w-full text-center mb-4">
-              <h4 class="font-semibold">User enters domain name(s)</h4>
-            </div>
-            <div class="text-2xl font-thin text-gray-400">↓</div>
-            <div
-              id="eligibility-checker"
-              class="grid grid-cols-2 gap-4 w-full mt-4"
-            >
-              <div
-                class="diagram-node bg-white p-4 rounded-lg shadow border-2 border-transparent text-center"
-                data-target="details-lock"
-              >
-                <span class="text-2xl">🔒</span>
-                <p class="font-semibold mt-2">Check Registrar Lock</p>
-              </div>
-              <div
-                class="diagram-node bg-white p-4 rounded-lg shadow border-2 border-transparent text-center"
-                data-target="details-age"
-              >
-                <span class="text-2xl">🗓️</span>
-                <p class="font-semibold mt-2">Check Domain Age</p>
-              </div>
-              <div
-                class="diagram-node bg-white p-4 rounded-lg shadow border-2 border-transparent text-center"
-                data-target="details-privacy"
-              >
-                <span class="text-2xl">🕵️</span>
-                <p class="font-semibold mt-2">Check Privacy Services</p>
-              </div>
-              <div
-                class="diagram-node bg-white p-4 rounded-lg shadow border-2 border-transparent text-center"
-                data-target="details-redemption"
-              >
-                <span class="text-2xl">♻️</span>
-                <p class="font-semibold mt-2">Check Redemption Period</p>
-              </div>
-            </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Choice Card 1: NS Change -->
+          <div
+            id="choice-ns-change"
+            class="choice-card bg-white p-8 rounded-xl shadow-lg border-2 border-transparent"
+          >
+            <div class="text-5xl mb-4">🔄</div>
+            <h4 class="text-2xl font-bold mb-2">Transfer with NS Change</h4>
+            <p class="text-gray-600">
+              Choose this path if you want to move your domain's DNS hosting to
+              our platform. This involves a pre-transfer zone migration to
+              prevent downtime.
+            </p>
           </div>
 
-          <!-- Details Pane -->
-          <div class="lg:w-1/2 mt-8 lg:mt-0">
-            <div
-              id="details-pane-container"
-              class="bg-white p-6 rounded-xl shadow-lg min-h-[280px] flex items-center justify-center"
-            >
-              <div id="details-default" class="text-center text-gray-500">
-                <p>Click a check on the left to learn more.</p>
-              </div>
-              <div id="details-lock" class="details-pane hidden-detail">
-                <h4 class="font-bold text-lg mb-2">Registrar Lock Status</h4>
-                <p class="text-gray-700">
-                  The system checks if the domain has the status
-                  `clientTransferProhibited`. If locked, the UI will clearly
-                  state:
-                  <em>
-                    "This domain is locked. Please log in to your current
-                    registrar and unlock the domain before proceeding,"
-                  </em>
-                  and provide a link to a relevant help article.
-                </p>
-              </div>
-              <div id="details-age" class="details-pane hidden-detail">
-                <h4 class="font-bold text-lg mb-2">Domain Age</h4>
-                <p class="text-gray-700">
-                  Per ICANN rules, domains cannot be transferred within 60 days
-                  of registration or a previous transfer. If ineligible, the
-                  system will inform the user of the exact date the domain can
-                  be moved.
-                </p>
-              </div>
-              <div id="details-privacy" class="details-pane hidden-detail">
-                <h4 class="font-bold text-lg mb-2">Privacy Services</h4>
-                <p class="text-gray-700">
-                  While not always a blocker, active WHOIS privacy services can
-                  sometimes interfere. The system will flag this with a
-                  recommendation:
-                  <em>
-                    "For a smoother transfer, we recommend disabling this with
-                    your current registrar temporarily."
-                  </em>
-                </p>
-              </div>
-              <div id="details-redemption" class="details-pane hidden-detail">
-                <h4 class="font-bold text-lg mb-2">Redemption Period</h4>
-                <p class="text-gray-700">
-                  If a domain has expired and is in its "redemption period," it
-                  cannot be transferred. The system will detect this and
-                  instruct the user to first renew the domain with their current
-                  registrar.
-                </p>
-              </div>
-            </div>
+          <!-- Choice Card 2: Keep NS -->
+          <div
+            id="choice-ns-keep"
+            class="choice-card bg-white p-8 rounded-xl shadow-lg border-2 border-transparent"
+          >
+            <div class="text-5xl mb-4">➡️</div>
+            <h4 class="text-2xl font-bold mb-2">Keep Existing Nameservers</h4>
+            <p class="text-gray-600">
+              Choose this path for a standard registrar transfer. Your DNS
+              hosting will remain with your current provider; only the domain
+              registration will move.
+            </p>
           </div>
         </div>
       </section>
@@ -286,70 +175,163 @@
           <span class="text-blue-800">Phase 2:</span>
           The Automated Transfer Workflow
         </h3>
-        <p class="text-lg text-gray-600 mb-12">
-          Once a domain passes the eligibility checks, the client moves through
-          a simple, guided workflow. This timeline illustrates the core steps
-          from initiation to our backend systems taking over the request.
+        <p id="phase2-intro" class="text-lg text-gray-600 mb-12">
+          Please select a transfer path in Phase 1 to see the detailed workflow.
         </p>
 
-        <div class="relative">
-          <!-- The line -->
-          <div class="absolute left-1/2 -ml-px w-0.5 h-full bg-blue-200"></div>
-          <!-- Timeline items -->
-          <div class="space-y-12">
+        <div class="relative min-h-[400px]">
+          <!-- Workflow for NS Change -->
+          <div id="workflow-ns-change" class="workflow-pane hidden-pane">
             <div class="relative">
               <div
-                class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                class="absolute left-1/2 -ml-px w-0.5 h-full bg-blue-200"
               ></div>
-              <div class="ml-[55%] pl-8">
-                <h4 class="font-bold text-xl mb-2">1. Initiation</h4>
-                <p>
-                  The client enters a single domain or uploads a bulk CSV file.
-                  The Pre-Transfer Eligibility Checker from Phase 1 confirms the
-                  domains are ready to move.
-                </p>
+              <div class="space-y-12">
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="ml-[55%] pl-8">
+                    <h4 class="font-bold text-xl mb-2">
+                      1. Populate Zone File
+                    </h4>
+                    <p>
+                      Client is prompted to create and populate their DNS zone
+                      file on our platform first. This ensures all records (A,
+                      MX, CNAME) are ready before the switch.
+                    </p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="mr-[55%] pr-8 text-right">
+                    <h4 class="font-bold text-xl mb-2">
+                      2. Change Nameservers
+                    </h4>
+                    <p>
+                      We advise the client to update the nameservers at their
+                      <strong>current</strong>
+                      registrar to point to our platform. The registrar transfer
+                      has not started yet.
+                    </p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="ml-[55%] pl-8">
+                    <h4 class="font-bold text-xl mb-2">
+                      3. Monitor Propagation
+                    </h4>
+                    <p>
+                      Our system automatically begins monitoring DNS
+                      propagation. This can take up to 24 hours. The client's
+                      dashboard shows the live status.
+                    </p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="mr-[55%] pr-8 text-right">
+                    <h4 class="font-bold text-xl mb-2">
+                      4. Initiate Registrar Transfer
+                    </h4>
+                    <p>
+                      Once propagation is confirmed, the system notifies the
+                      client to begin the standard registrar transfer (unlock
+                      domain, get EPP code).
+                    </p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="ml-[55%] pl-8">
+                    <h4 class="font-bold text-xl mb-2">5. Complete Transfer</h4>
+                    <p>
+                      The client provides the EPP code, and our backend
+                      completes the registrar transfer. The associated cost is
+                      added to their next monthly invoice.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+
+          <!-- Workflow for Keeping NS -->
+          <div id="workflow-ns-keep" class="workflow-pane hidden-pane">
             <div class="relative">
               <div
-                class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                class="absolute left-1/2 -ml-px w-0.5 h-full bg-blue-200"
               ></div>
-              <div class="mr-[55%] pr-8 text-right">
-                <h4 class="font-bold text-xl mb-2">
-                  2. Authorization & Billing
-                </h4>
-                <p>
-                  The client provides the Authorization/EPP code. The system
-                  confirms the mandatory 1-year registration extension, noting
-                  it as a billable event that will be included in their next
-                  monthly invoice.
-                </p>
-              </div>
-            </div>
-            <div class="relative">
-              <div
-                class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
-              ></div>
-              <div class="ml-[55%] pl-8">
-                <h4 class="font-bold text-xl mb-2">3. Final Confirmation</h4>
-                <p>
-                  A final summary screen is presented for review. Upon
-                  confirmation, the user is notified that the automated transfer
-                  process will now begin.
-                </p>
-              </div>
-            </div>
-            <div class="relative">
-              <div
-                class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
-              ></div>
-              <div class="mr-[55%] pr-8 text-right">
-                <h4 class="font-bold text-xl mb-2">4. Backend Automation</h4>
-                <p>
-                  Our system makes an API call to the central domain registry,
-                  formally initiating the transfer. The customer's dashboard is
-                  updated in real-time to "Transfer in Progress."
-                </p>
+              <div class="space-y-12">
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="ml-[55%] pl-8">
+                    <h4 class="font-bold text-xl mb-2">
+                      1. Pre-Transfer Checks
+                    </h4>
+                    <p>
+                      Our system runs eligibility checks (Domain Lock, Age,
+                      etc.) and prompts the user for any required actions at
+                      their current registrar.
+                    </p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="mr-[55%] pr-8 text-right">
+                    <h4 class="font-bold text-xl mb-2">
+                      2. Authorization & Billing
+                    </h4>
+                    <p>
+                      The client provides the Authorization/EPP code. The system
+                      confirms the mandatory 1-year registration extension,
+                      noting it as a billable event for their next invoice.
+                    </p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="ml-[55%] pl-8">
+                    <h4 class="font-bold text-xl mb-2">
+                      3. Final Confirmation
+                    </h4>
+                    <p>
+                      A final summary screen is presented for review. Upon
+                      confirmation, the user is notified that the automated
+                      transfer process will now begin.
+                    </p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <div
+                    class="absolute left-1/2 -ml-3 w-6 h-6 bg-blue-800 rounded-full"
+                  ></div>
+                  <div class="mr-[55%] pr-8 text-right">
+                    <h4 class="font-bold text-xl mb-2">
+                      4. Backend Automation
+                    </h4>
+                    <p>
+                      Our system makes an API call to the central domain
+                      registry, formally initiating the transfer. The customer's
+                      dashboard is updated in real-time.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -372,27 +354,33 @@
         </p>
 
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div id="comm-tabs" class="flex bg-gray-100 p-1">
+          <div id="comm-tabs" class="flex flex-wrap bg-gray-100 p-1">
             <button
-              class="tab flex-1 p-3 font-semibold rounded-lg"
+              class="tab flex-grow p-3 font-semibold rounded-lg"
               data-target="comm-initiated"
             >
-              Initiated
+              Standard: Initiated
             </button>
             <button
-              class="tab flex-1 p-3 font-semibold rounded-lg"
-              data-target="comm-reminder"
+              class="tab flex-grow p-3 font-semibold rounded-lg"
+              data-target="comm-populate-zone"
             >
-              Reminder
+              NS Change: Populate Zone
             </button>
             <button
-              class="tab flex-1 p-3 font-semibold rounded-lg"
+              class="tab flex-grow p-3 font-semibold rounded-lg"
+              data-target="comm-propagation"
+            >
+              NS Change: Propagation Done
+            </button>
+            <button
+              class="tab flex-grow p-3 font-semibold rounded-lg"
               data-target="comm-success"
             >
               Success
             </button>
             <button
-              class="tab flex-1 p-3 font-semibold rounded-lg"
+              class="tab flex-grow p-3 font-semibold rounded-lg"
               data-target="comm-failed"
             >
               Failed
@@ -409,43 +397,54 @@
                 <p>
                   We've successfully initiated the transfer for
                   <strong>example.com</strong>
-                  . The next step requires your action.
-                </p>
-                <br />
-                <p>
-                  You will receive an email from your
+                  . You will receive an email from your
                   <strong>current registrar</strong>
                   asking you to approve this transfer. Please find that email
                   and click "Approve" to expedite the process.
                 </p>
-                <br />
-                <p>
-                  The entire transfer can take 5-7 days to complete. We'll
-                  notify you the moment it's done!
-                </p>
               </div>
             </div>
-            <div id="comm-reminder" class="comm-pane hidden">
+            <div id="comm-populate-zone" class="comm-pane hidden-pane">
               <p class="text-sm font-semibold text-gray-500 mb-2">
-                Subject: Reminder: Please approve the transfer for example.com
+                Subject: Action Required: Populate Zone for example.com Transfer
               </p>
               <div class="border rounded-lg p-4 bg-gray-50">
                 <p>Hi [Customer Name],</p>
                 <br />
                 <p>
-                  Just a friendly reminder that the transfer for
-                  <strong>example.com</strong>
-                  is still pending your approval.
+                  To begin your transfer with nameserver changes, your first
+                  step is to configure your DNS records on our platform. This
+                  ensures your services continue without interruption after the
+                  switch.
+                </p>
+                <br />
+                <button
+                  class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg"
+                >
+                  Configure DNS Zone
+                </button>
+              </div>
+            </div>
+            <div id="comm-propagation" class="comm-pane hidden-pane">
+              <p class="text-sm font-semibold text-gray-500 mb-2">
+                Subject: Update: NS Propagation Complete for example.com
+              </p>
+              <div class="border rounded-lg p-4 bg-gray-50">
+                <p>Hi [Customer Name],</p>
+                <br />
+                <p>
+                  Good news! Your new nameservers have successfully propagated
+                  across the internet. You can now proceed with the final step:
+                  the registrar transfer.
                 </p>
                 <br />
                 <p>
-                  Please check your inbox (and spam folder) for an authorization
-                  email from your previous registrar and click the approval link
-                  inside.
+                  Please unlock your domain at your old registrar, get your EPP
+                  code, and complete the transfer in your dashboard.
                 </p>
               </div>
             </div>
-            <div id="comm-success" class="comm-pane hidden">
+            <div id="comm-success" class="comm-pane hidden-pane">
               <p class="text-sm font-semibold text-gray-500 mb-2">
                 Subject: ✅ Success! example.com has been transferred to us.
               </p>
@@ -455,23 +454,12 @@
                 <p>
                   Great news! The transfer for
                   <strong>example.com</strong>
-                  is complete. It is now active in your account.
+                  is complete. It is now active and fully managed in your
+                  account.
                 </p>
-                <br />
-                <p>
-                  Your next step is to configure your DNS records to ensure your
-                  website and email continue to work correctly. Click the button
-                  below to get started.
-                </p>
-                <br />
-                <button
-                  class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg"
-                >
-                  Manage DNS for example.com
-                </button>
               </div>
             </div>
-            <div id="comm-failed" class="comm-pane hidden">
+            <div id="comm-failed" class="comm-pane hidden-pane">
               <p class="text-sm font-semibold text-red-500 mb-2">
                 Subject: ⚠️ Action Required: Your transfer for example.com has
                 failed.
@@ -488,8 +476,7 @@
                 <br />
                 <p>
                   Please obtain the correct EPP/Authorization code from your
-                  current registrar and try again. You can restart the process
-                  from your Domain Transfer Center.
+                  current registrar and try again.
                 </p>
               </div>
             </div>
@@ -511,7 +498,6 @@
           failure points and automatically escalating issues that require human
           intervention.
         </p>
-
         <div class="bg-white p-8 rounded-xl shadow-lg">
           <div
             class="flex flex-col md:flex-row items-center justify-around text-center"
@@ -578,7 +564,6 @@
           through an optional DNS record scan and a clear "Getting Started"
           checklist. Try it out below!
         </p>
-
         <div class="grid md:grid-cols-2 gap-12">
           <div class="bg-white p-8 rounded-xl shadow-lg">
             <h4 class="font-bold text-xl mb-4">Automated DNS Record Import</h4>
@@ -674,63 +659,69 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // --- Phase 1: Interactive Diagram Logic ---
-        const nodes = document.querySelectorAll(".diagram-node");
-        const detailPanes = document.querySelectorAll(".details-pane");
-        const defaultDetail = document.getElementById("details-default");
+        // --- Phase 1: Choice Logic ---
+        const choiceNSChange = document.getElementById("choice-ns-change");
+        const choiceNSKeep = document.getElementById("choice-ns-keep");
+        const workflowNSChange = document.getElementById("workflow-ns-change");
+        const workflowNSKeep = document.getElementById("workflow-ns-keep");
+        const phase2Intro = document.getElementById("phase2-intro");
 
-        nodes.forEach((node) => {
-          node.addEventListener("click", () => {
-            const targetId = node.dataset.target;
-            const targetPane = document.getElementById(targetId);
+        function setWorkflow(choice) {
+          // Reset states
+          choiceNSChange.classList.remove("active");
+          choiceNSKeep.classList.remove("active");
+          workflowNSChange.classList.replace("visible-pane", "hidden-pane");
+          workflowNSKeep.classList.replace("visible-pane", "hidden-pane");
 
-            // Deactivate all nodes and hide all panes
-            nodes.forEach((n) => n.classList.remove("active"));
-            detailPanes.forEach((p) => {
-              p.classList.add("hidden-detail");
-              p.classList.remove("visible-detail");
-            });
-            defaultDetail.style.display = "none";
+          if (choice === "ns-change") {
+            choiceNSChange.classList.add("active");
+            workflowNSChange.classList.replace("hidden-pane", "visible-pane");
+            phase2Intro.textContent =
+              "This workflow outlines the necessary steps for a transfer that includes changing nameservers to our platform, prioritizing zero downtime.";
+          } else if (choice === "ns-keep") {
+            choiceNSKeep.classList.add("active");
+            workflowNSKeep.classList.replace("hidden-pane", "visible-pane");
+            phase2Intro.textContent =
+              "This workflow outlines the standard registrar transfer process when you keep your existing nameserver and DNS provider.";
+          }
+        }
 
-            // Activate the clicked node and show the target pane
-            node.classList.add("active");
-            if (targetPane) {
-              targetPane.classList.remove("hidden-detail");
-              targetPane.classList.add("visible-detail");
-            }
-          });
-        });
+        choiceNSChange.addEventListener("click", () =>
+          setWorkflow("ns-change"),
+        );
+        choiceNSKeep.addEventListener("click", () => setWorkflow("ns-keep"));
 
         // --- Phase 3: Communication Tabs Logic ---
         const tabs = document.querySelectorAll(".tab");
         const commPanes = document.querySelectorAll(".comm-pane");
 
-        // Set initial active tab
-        if (tabs.length > 0) {
-          tabs[0].classList.add("active");
+        function activateTab(tab) {
+          const targetId = tab.dataset.target;
+          const targetPane = document.getElementById(targetId);
+
+          tabs.forEach((t) => t.classList.remove("active"));
+          commPanes.forEach((p) => p.classList.add("hidden-pane"));
+
+          tab.classList.add("active");
+          if (targetPane) {
+            targetPane.classList.remove("hidden-pane");
+          }
         }
 
         tabs.forEach((tab) => {
-          tab.addEventListener("click", () => {
-            const targetId = tab.dataset.target;
-            const targetPane = document.getElementById(targetId);
-
-            tabs.forEach((t) => t.classList.remove("active"));
-            commPanes.forEach((p) => p.classList.add("hidden"));
-
-            tab.classList.add("active");
-            if (targetPane) {
-              targetPane.classList.remove("hidden");
-            }
-          });
+          tab.addEventListener("click", () => activateTab(tab));
         });
+
+        // Set initial active tab
+        if (tabs.length > 0) {
+          activateTab(tabs[0]);
+        }
 
         // --- Phase 5: Checklist Logic ---
         const checkboxes = document.querySelectorAll(
           '#checklist input[type="checkbox"]',
         );
         checkboxes.forEach((checkbox) => {
-          // Simple toggle for visual effect, doesn't save state
           const label = checkbox.nextElementSibling;
           const checkmark = label.querySelector("span:first-child");
 
@@ -750,10 +741,10 @@
         const observerOptions = {
           root: null,
           rootMargin: "0px",
-          threshold: 0.4,
+          threshold: 0.3,
         };
 
-        const observer = new IntersectionObserver((entries, observer) => {
+        const observer = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               const id = entry.target.getAttribute("id");
